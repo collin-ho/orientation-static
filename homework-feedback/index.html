@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 <meta charset="UTF-8" />
 <title>Orientation Feedback</title>
 <style>
@@ -10,8 +12,16 @@
   button{padding:.4rem .75rem;margin-top:.8rem;border:0;border-radius:4px;cursor:pointer}
   .small{font-size:.9rem;color:#666;margin-left:.5rem}
 </style>
+  <style><!-- tailwind dark patch -->
+    table th, table td { border-color: #475569; }
+    input, select { background-color:#334155; color:white; }
+  </style>
+  <style><!-- tailwind dark patch -->
+    table th,table td{border-color:#475569;}
+    input,select{background-color:#334155;color:white;}
+  </style>
 </head>
-<body>
+<body class="bg-[#121212] text-slate-100 p-6">
 
 <h2>Orientation Feedback</h2>
 
