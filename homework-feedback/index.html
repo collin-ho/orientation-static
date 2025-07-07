@@ -1,148 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="utf-8" />
+  <title>Homework Grades</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-<meta charset="UTF-8" />
-<title>Orientation Feedback</title>
-<style>
-  body{font-family:system-ui;margin:1.5rem;max-width:960px}
-  table{width:100%;border-collapse:collapse;margin-top:.5rem}
-  th,td{border:1px solid #ddd;padding:.35rem;text-align:center}
-  button{padding:.4rem .75rem;margin-top:.8rem;border:0;border-radius:4px;cursor:pointer}
-  .small{font-size:.9rem;color:#666;margin-left:.5rem}
-</style>
-  <style><!-- tailwind dark patch -->
-    table th, table td { border-color: #475569; }
-    input, select { background-color:#334155; color:white; }
-  </style>
-  <style><!-- tailwind dark patch -->
-    table th,table td{border-color:#475569;}
-    input,select{background-color:#334155;color:white;}
-  </style>
 </head>
 <body class="bg-[#121212] text-slate-100 p-6">
+  <h1 class="text-2xl font-bold mb-4">Homework Grades</h1>
+  <form id="hwForm">
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <label>
+        <span class="block mb-1">Grader</span>
+        <input id="grader" class="bg-slate-700 text-white px-2 py-1 rounded w-full" placeholder="Your name" />
+      </label>
+    </div>
 
-<h2>Orientation Feedback</h2>
+    <table class="w-full text-sm text-slate-200 border-collapse mb-4">
+      <thead class="bg-slate-800">
+        <tr>
+          <th class="p-2 border border-slate-600">Orientee</th>
+          <th class="p-2 border border-slate-600">Assignment</th>
+          <th class="p-2 border border-slate-600">Grade<br/>(0-100)</th>
+          <th class="p-2 border border-slate-600">Comments</th>
+          <th class="p-2 border border-slate-600 w-12"></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
 
-<label>Grader&nbsp;
-  <input id="grader" placeholder="Your name" required>
-</label>
-&nbsp;&nbsp;
-<label>Week&nbsp;
-  <select id="weekLabel" required>
-    <option value="" disabled selected>Select…</option>
-    <option value="Week 1 (Remote)">Week 1&nbsp;(Remote)</option>
-    <option value="Week 2 (In Person)">Week 2&nbsp;(In&nbsp;Person)</option>
-  </select>
-</label>
-&nbsp;&nbsp;
-<label>Day&nbsp;
-  <select id="weekDay" required>
-    <option value="" disabled selected>Select…</option>
-    <option value="Mon">Mon</option>
-    <option value="Tue">Tue</option>
-    <option value="Wed">Wed</option>
-    <option value="Thu">Thu</option>
-    <option value="Fri">Fri</option>
-  </select>
-</label>
-
-<table id="tbl">
-  <thead>
-    <tr>
-      <th>Orientee</th><th>Effort<br>(0-3)</th><th>Compr.<br>(0-3)</th>
-      <th>Client App<br>(0-3)</th><th>Comments</th><th></th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-<button id="addRow">+ Add orientee</button><br>
-<button id="submit">Submit batch</button><span id="msg" class="small"></span>
+    <button type="button" onclick="addRow()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded mb-4">+ Add orientee</button>
+    <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded">Submit</button>
+    <span id="msg" class="text-sm ml-3"></span>
+  </form>
 
 <script>
 let ORIENTEES = [];
-// Fetch orientees from backend on page load
-fetch('https://feedbackotn.duckdns.org/orientees')
-  .then(res => res.json())
-  .then(list => {
-    ORIENTEES = list.map(o => o.name);
-    tbody.innerHTML = '';
-    addRow();
-  })
-  .catch(() => {
-    ORIENTEES = [];
-    tbody.innerHTML = '<tr><td colspan="6">Could not load orientees</td></tr>';
-  });
+let ASSIGNMENTS = [];
+const API_ROOT = 'https://feedbackotn.duckdns.org'; // adjust if different
 
-/* --- CONFIG: YOUR  WEBHOOK URL --- */
-const HOOK = "https://feedbackotn.duckdns.org/orientation-feedback";
-
-/* --- DOM shortcuts --- */
-const tbody = document.querySelector("#tbl tbody");
-document.getElementById("addRow").onclick = addRow;
-
-/* --- Row builder with orientee dropdown --- */
-function addRow(){
-  const opts = ['<option value="" disabled selected>Select…</option>',
-                ...ORIENTEES.map(n=>`<option>${n}</option>`)
-               ].join('');
-  const r = tbody.insertRow();
-  r.innerHTML = `
-    <td><select required>${opts}</select></td>
-    <td><input type="number" min="0" max="3" required></td>
-    <td><input type="number" min="0" max="3" required></td>
-    <td><input type="number" min="0" max="3" required></td>
-    <td><input></td>
-    <td><button onclick="this.closest('tr').remove()">🗑️</button></td>`;
-}
-
-/* --- Helpers for week label / weekday --- */
-function getWeekDay(d){                  // "Mon", "Tue", …
-  return d.toLocaleDateString('en-US',{weekday:'short'});
-}
-function getWeekLabel(d){                // "Week 1 (Remote)" / "Week 2 (In Person)"
-  const anchor = new Date('2025-01-06'); // Monday of first Remote week
-  const weekNum = Math.floor((d - anchor)/604800000) % 2 ? 2 : 1;
-  return weekNum === 1 ? "Week 1 (Remote)" : "Week 2 (In Person)";
-}
-
-/* --- Submit handler --- */
-document.getElementById("submit").onclick = async () =>{
-  const grader   = document.getElementById("grader").value.trim();
-  const weekLabel= document.getElementById("weekLabel").value;
-  const weekDay  = document.getElementById("weekDay").value;
-  if(!grader || !weekLabel || !weekDay) return alert("Fill grader, week, and day.");
-  const items=[...tbody.rows].map(r=>({
-      name: r.cells[0].firstChild.value,
-      effort: r.cells[1].firstChild.valueAsNumber,
-      comprehension: r.cells[2].firstChild.valueAsNumber,
-      clientApp: r.cells[3].firstChild.valueAsNumber,
-      feedback: r.cells[4].firstChild.value.trim()
-  })).filter(i=>i.name);
-  if(!items.length) return alert("Add at least one orientee.");
-
-  const payload = {
-    grader,
-    weekLabel,
-    weekDay,
-    items
-  };
-
-  document.getElementById("msg").textContent="Sending…";
+async function init(){
   try{
-    await fetch(HOOK,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload)
-    });
-    document.getElementById("msg").textContent="✓ Sent!";
-    tbody.innerHTML=""; addRow();                      // clear rows
-  }catch(e){
-    document.getElementById("msg").textContent="Error – try again";
+    const oResp = await fetch(API_ROOT + '/orientees');
+    ORIENTEES = (await oResp.json()).map(o=>o.name);
+  }catch{}
+  try{
+    const aResp = await fetch(API_ROOT + '/assignments');
+    ASSIGNMENTS = await aResp.json(); // array of strings
+  }catch{}
+  addRow();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+document.getElementById('hwForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const grader = document.getElementById('grader').value.trim();
+  if(!grader) return alert('Grader required');
+  const items=[...rows.children].map(r=>({
+    name: r.cells[0].firstChild.value,
+    assignment: r.cells[1].firstChild.value,
+    grade: r.cells[2].firstChild.valueAsNumber,
+    comments: r.cells[3].firstChild.value.trim()
+  })).filter(i=>i.name && i.assignment);
+  if(!items.length) return alert('Add at least one line');
+  const dateStr = new Date().toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'}).replaceAll('/','.');
+  const payload={ grader, date: dateStr, items };
+  document.getElementById('msg').textContent='Sending…';
+  try{
+    await fetch(API_ROOT + '/homework-grades', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    document.getElementById('msg').textContent='✓ Sent!';
+    rows.innerHTML='';
+    addRow();
+  }catch(err){
+    document.getElementById('msg').textContent='Error';
   }
-};
+});
+
+function addRow(){
+  const oOpts=['<option value="" disabled selected>Select…</option>',...ORIENTEES.map(n=>`<option>${n}</option>`)].join('');
+  const aOpts=['<option value="" disabled selected>Select…</option>',...ASSIGNMENTS.map(a=>`<option>${a}</option>`)].join('');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td class=\"border border-slate-700 p-1\"><select class=\"bg-slate-700 text-white px-1 py-1 rounded w-full\">${oOpts}</select></td>
+  <td class=\"border border-slate-700 p-1\"><select class=\"bg-slate-700 text-white px-1 py-1 rounded w-full\">${aOpts}</select></td>
+  <td class=\"border border-slate-700 p-1\"><input type=\"number\" min=\"0\" max=\"100\" class=\"bg-slate-700 text-white w-20 text-center rounded\"></td>
+  <td class=\"border border-slate-700 p-1\"><input class=\"bg-slate-700 text-white px-1 py-1 rounded w-full\"></td>
+  <td class=\"border border-slate-700 p-1 text-center\"><button onclick=\"this.closest('tr').remove()\" class=\"text-xl\">🗑️</button></td>`;
+  rows.appendChild(tr);
+}
 </script>
 </body>
 </html>
